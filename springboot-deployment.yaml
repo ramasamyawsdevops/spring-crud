@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: devproject
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      apptype: web
+      env: dev
+  template:
+    metadata:
+      name: webtemp
+      labels:
+        apptype: web
+        env: dev
+    spec:
+      containers:
+        - name: springboot
+          image: ramasamy123/myimage:v1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://mysql:3306/mydb
+            - name: SPRING_DATASOURCE_USERNAME
+              value: root
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: root
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: websvc
+  namespace: devproject
+spec:
+  ports:
+    - name: tomcat
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    apptype: web
+    env: dev
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webingress
+  namespace: devproject
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: "ad25982ced5a242e3958f8a986a18677-1008565827.ap-south-1.elb.amazonaws.com"
+      http:
+        paths:
+          - path: "/"
+            pathType: "Prefix"
+            backend:
+              service:
+                name: websvc
+                port:
+                  number: 80
