@@ -1,18 +1,37 @@
-FROM openjdk:17-jdk-slim
+# ----------- Stage 1: Build the app using Maven -----------
 
-# Set environment variables for Spring Boot to connect to external MySQL
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+
+# Set environment variables for DB (used by Spring Boot)
 ENV SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/mydb
 ENV SPRING_DATASOURCE_USERNAME=root
 ENV SPRING_DATASOURCE_PASSWORD=root
 
-# Create and set working directory (optional but cleaner)
+
+# Set working directory
 WORKDIR /app
 
-# Copy the JAR file to the container
-COPY target/*.jar app.jar
+# Copy pom.xml and download dependencies first (for caching)
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
 
-# Expose the application port
+# Copy the rest of the source code
+COPY src ./src
+
+# Build the application
+RUN mvn clean package -DskipTests
+
+# ----------- Stage 2: Run the app using JDK -----------
+FROM openjdk:17-jdk-slim
+
+# Set working directory
+WORKDIR /app
+
+# Copy the jar file from the build stage
+COPY --from=build /app/target/*.jar app.jar
+
+# Expose the port the app runs on
 EXPOSE 8080
 
-# Run the Spring Boot application
-CMD ["java", "-jar", "app.jar"]
+# Run the app
+ENTRYPOINT ["java", "-jar", "app.jar"]
