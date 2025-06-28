@@ -1,0 +1,49 @@
+Deploying sprinboot application
+
+
+install git and maven
+
+java -version
+
+openjdk version "17.0.15" 2025-04-15
+
+cat application.properties
+
+spring.web.resources.static-locations=file:./public/images
+spring.mvc.static-path-pattern=/images/**
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.url=jdbc:mysql://localhost:3306/mydb
+spring.datasource.username=root
+spring.datasource.password=Rajan@123
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+
+
+mvn clean install -DskipTests
+
+
+cd target/
+
+mysql -u root -p
+
+SELECT user, host, plugin FROM mysql.user WHERE user = 'root';
+
+If it says auth_socket, run the following to switch to password login:
+
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'Rajan@123';
+FLUSH PRIVILEGES;
+
+
+exit
+
+sudo systemctl status mysql
+
+sudo systemctl start mysql
+
+
+
+nohup java -jar spring-crud-0.0.1-SNAPSHOT.jar &   or  java -jar spring-crud-0.0.1-SNAPSHOT.jar
+
+
+
